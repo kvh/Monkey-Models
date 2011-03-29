@@ -12,7 +12,7 @@ All dates and times in minutes.
 class Monkey(object):
     guid = 0
     """Represents a single monkey"""
-    def __init__(self, sex, birthdate, mother, father, rank, health):
+    def __init__(self, sex, birthdate, mother, father, rank=None, health=None, name=None):
         global guid
         self.id = guid
         guid += 1
@@ -22,6 +22,7 @@ class Monkey(object):
         self.father = father
         self.rank = rank
         self.health = health
+        self.name = name
     
     def __repr__(self):
         s = "----------\n"
