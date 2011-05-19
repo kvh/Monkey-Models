@@ -1,6 +1,6 @@
 from monkey import Monkey
 import datetime
-
+import cPickle as pickle
 NA_STR = '\N'
 
 field_map = dict(       sname='name',
@@ -24,13 +24,17 @@ def load_from_biography_csv(filename):
     orig_fields = csv.readline().strip().split(',')
     #print orig_fields
     #fields = [field_map[of] for of in orig_fields]
-    monkeys = []
+    monkeys = {}
     for line in csv.readlines():
         attrs = line.strip().split(',')
         args = dict([(field_map[f], transform_map[f](a)) for f, a in zip(orig_fields, attrs) if field_map[f] is not None])
         print args
         new_monkey = Monkey(**args)
-        monkeys.append(new_monkey)
+        monkeys[new_monkey.name] = new_monkey
+    return monkeys
         
 if __name__ == '__main__':
-    load_from_biography_csv('data/clean_biography.csv')
+    minkies = load_from_biography_csv('data/clean_biography.csv')
+    pickle.dump(minkies, open("monkeys.pkl", "w"))
+
+
