@@ -52,7 +52,9 @@ class Monkey(object):
         m.mother = self
         m.father = father
         return m
-            
+    
+    def is_alive_at_time(self, dt):
+        return self.birthdate > dt        
         
     def age_diff(self, other):
         return other.birthdate - self.birthdate
@@ -100,17 +102,48 @@ class PoissonLinearGroomingModel(GroomingModel):
         duration_in_days = duration/(60 * 24)
         rate = self.determine_grooming_rate(groomer, groomed)
         return poisson.rvs(rate*duration_in_days, size=1)
+
+
+class LogisticGroomingModel(GroomingModel):
+    """Provides a simple linear model for the rate at which one monkey grooms another"""
+    def __init__(self, covariate_methods, coefs, intercept=1):
+        super(LogisticGroomingModel, self).__init__()
+        self.covariate_methods = covariate_methods
+        self.coefs = coefs
+        self.intercept = intercept
         
+    def determine_grooming_prob(self, groomer, groomed):
+        rate = self.intercept
+        for coef, cv in zip(self.coefs, self.covariate_methods):
+            rate += coef * getattr(groomer, cv)(groomed)
+        return 1/(1 + math.exp(-rate))
+        
+    def get_groomings(self, groomer, groomed, environment, duration_in_min):
+        duration_months = duration/(60 * 24 * 30.45)
+        p = self.determine_grooming_prob(groomer, groomed)
+        return binomial.rvs(p, size=duration_months)        
     
     
 class Population(object):
     """Represents a population of monkeys"""
-    def __init__(self, size, grooming_model):
+    def __init__(self, size, grooming_model, monkeys=None):
         self.size = size
-        self.monkeys = []
+        self.monkeys = monkeys
+        if not self.monkeys:
+            self.monkeys = {}
         self.grooming_rates = N.zeros((size, size))
         self.social_distances = N.zeros((size, size))
         self.grooming_model = grooming_model
+    
+    def monkey_by_name(self, name):
+        return self.monkeys.get(name)
+        
+    def get_current_population(self, dt):
+        minks = []
+        for m in self.monkeys.values():
+            if m.birthdate > dt:
+                minks.append(m)
+        return minks
         
     def init_population_random(self):
         """This will provide a population w random characteristics and no family structure"""
